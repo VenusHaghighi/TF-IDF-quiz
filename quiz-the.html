@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TF–IDF Quiz · "the"</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; }
+  body {
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    background: #f4f5f7;
+    color: #1a1f2e;
+    min-height: 100vh;
+    padding: 28px 18px calc(28px + env(safe-area-inset-bottom));
+    display: flex;
+    justify-content: center;
+  }
+  .card {
+    width: 100%;
+    max-width: 540px;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(20,24,42,0.10);
+    overflow: hidden;
+  }
+  .top { background: #c81e1e; padding: 22px 24px; color: #fff; }
+  .eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; color: #f4c7c7; }
+  .top h1 { font-family: 'IBM Plex Serif', serif; font-weight: 600; font-size: 26px; line-height: 1.2; margin: 8px 0 0; }
+  .body { padding: 24px; }
+  .ctx { background: #f4f5f7; border-radius: 12px; padding: 16px 18px; font-size: 15px; line-height: 1.55; color: #3a4256; }
+  .ctx b { color: #13182a; }
+  .ctx .doc { color: #c81e1e; font-weight: 600; }
+  .clabel { font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #9aa1b0; margin-bottom: 10px; }
+  .corpus { display: flex; flex-direction: column; gap: 10px; }
+  .doc { border: 1px solid #e6e8ec; border-left: 5px solid #c2c6cf; border-radius: 12px; padding: 12px 15px; }
+  .doc .label { font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 14px; }
+  .doc .text { font-family: 'IBM Plex Serif', serif; font-size: 16px; line-height: 1.4; color: #3a4256; margin-top: 5px; }
+  .doc .note { float: right; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #c81e1e; }
+  .d1 { background: #fdf0f0; border-left-color: #c81e1e; } .d1 .label { color: #c81e1e; }
+  .d2 { background: #edf8f2; border-left-color: #16a75c; } .d2 .label { color: #16a75c; }
+  .d3 { background: #fdf2e3; border-left-color: #e8820e; } .d3 .label { color: #c2700a; }
+  .d4 { background: #eef5fe; border-left-color: #1668e3; } .d4 .label { color: #1668e3; }
+  .t { color: #1668e3; font-weight: 600; }
+  .q { font-family: 'IBM Plex Serif', serif; font-size: 21px; line-height: 1.35; color: #13182a; margin: 22px 0 16px; }
+  .q .hl { color: #1668e3; }
+  .opts { display: flex; flex-direction: column; gap: 12px; }
+  .opt {
+    display: flex; align-items: center; gap: 14px;
+    width: 100%; text-align: left;
+    background: #fff; border: 2px solid #e4e7ec; border-radius: 14px;
+    padding: 16px 18px; font-size: 19px; color: #13182a; cursor: pointer;
+    font-family: 'IBM Plex Sans', sans-serif;
+    transition: border-color .12s, background .12s, transform .05s;
+  }
+  .opt:active { transform: scale(0.99); }
+  .opt .key {
+    flex: none; width: 34px; height: 34px; border-radius: 9px;
+    background: #eef0f3; color: #5a6275; font-family: 'IBM Plex Mono', monospace;
+    font-size: 17px; display: flex; align-items: center; justify-content: center;
+  }
+  .opt .val { font-family: 'IBM Plex Mono', monospace; font-weight: 500; }
+  .opt .mark { margin-left: auto; font-size: 22px; opacity: 0; }
+  .opt.correct { border-color: #16a75c; background: #eff8f2; }
+  .opt.correct .key { background: #16a75c; color: #fff; }
+  .opt.correct .mark { opacity: 1; color: #16a75c; }
+  .opt.wrong { border-color: #c81e1e; background: #fdf0f0; }
+  .opt.wrong .key { background: #c81e1e; color: #fff; }
+  .opt.wrong .mark { opacity: 1; color: #c81e1e; }
+  .opt.dim { opacity: 0.5; }
+  .opts.locked .opt { cursor: default; }
+  .feedback { margin-top: 20px; border-radius: 14px; padding: 18px 20px; display: none; }
+  .feedback.show { display: block; }
+  .feedback.right { background: #eff8f2; border: 1px solid #cce8d9; }
+  .feedback.no { background: #fdf0f0; border: 1px solid #f1cccc; }
+  .feedback h2 { font-size: 18px; margin: 0 0 10px; }
+  .feedback.right h2 { color: #16a75c; }
+  .feedback.no h2 { color: #c81e1e; }
+  .work { font-family: 'IBM Plex Mono', monospace; font-size: 15px; line-height: 1.7; color: #3a4256; }
+  .work b { color: #13182a; }
+  .retry {
+    margin-top: 14px; display: none; width: 100%; padding: 13px;
+    background: #13182a; color: #fff; border: none; border-radius: 12px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 15px; letter-spacing: 0.04em; cursor: pointer;
+  }
+  .retry.show { display: block; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="top">
+      <div class="eyebrow">Text Mining · Quick Check</div>
+      <h1>Compute TF–IDF for the word "the"</h1>
+    </div>
+    <div class="body">
+      <div class="clabel">The corpus &middot; 4 documents &mdash; “the” highlighted</div>
+      <div class="corpus">
+        <div class="doc d1">
+          <div class="label">Doc 1 &middot; health <span class="note">20 words</span></div>
+          <div class="text"><span class="t">The</span> new vaccine works well. <span class="t">The</span> vaccine is safe and <span class="t">the</span> vaccine saves lives, so get <span class="t">the</span> vaccine today.</div>
+        </div>
+        <div class="doc d2">
+          <div class="label">Doc 2 &middot; sport</div>
+          <div class="text"><span class="t">The</span> team won <span class="t">the</span> final match last night.</div>
+        </div>
+        <div class="doc d3">
+          <div class="label">Doc 3 &middot; cooking</div>
+          <div class="text">Add salt and stir <span class="t">the</span> soup gently.</div>
+        </div>
+        <div class="doc d4">
+          <div class="label">Doc 4 &middot; travel <span class="note">no &ldquo;the&rdquo;</span></div>
+          <div class="text">We booked a cheap flight to Rome.</div>
+        </div>
+      </div>
+
+      <div class="q">What is <span class="hl">TF–IDF("the", Doc 1)</span>?</div>
+
+      <div class="opts" id="opts">
+        <button class="opt" data-correct="false"><span class="key">A</span><span class="val">0.20</span><span class="mark">✗</span></button>
+        <button class="opt" data-correct="false"><span class="key">B</span><span class="val">0</span><span class="mark">✗</span></button>
+        <button class="opt" data-correct="true"><span class="key">C</span><span class="val">≈ 0.025</span><span class="mark">✓</span></button>
+        <button class="opt" data-correct="false"><span class="key">D</span><span class="val">0.12</span><span class="mark">✗</span></button>
+      </div>
+
+      <div class="feedback" id="feedback">
+        <h2 id="fbtitle"></h2>
+        <div class="work">
+          <b>TF</b> = 4 / 20 = <b>0.20</b><br>
+          <b>df</b> = 3 of 4 docs → <b>IDF</b> = log₁₀(4 / 3) ≈ <b>0.125</b><br>
+          <b>TF–IDF</b> = 0.20 × 0.125 ≈ <b>0.025</b>
+        </div>
+      </div>
+
+      <button class="retry" id="retry">Try again</button>
+    </div>
+  </div>
+
+<script>
+  (function () {
+    var opts = document.getElementById('opts');
+    var buttons = Array.prototype.slice.call(opts.querySelectorAll('.opt'));
+    var feedback = document.getElementById('feedback');
+    var fbtitle = document.getElementById('fbtitle');
+    var retry = document.getElementById('retry');
+
+    function lock(picked) {
+      opts.classList.add('locked');
+      var isRight = picked.getAttribute('data-correct') === 'true';
+      buttons.forEach(function (b) {
+        var correct = b.getAttribute('data-correct') === 'true';
+        if (correct) b.classList.add('correct');
+        else if (b === picked) b.classList.add('wrong');
+        else b.classList.add('dim');
+      });
+      feedback.classList.add('show', isRight ? 'right' : 'no');
+      fbtitle.textContent = isRight ? 'Correct! ✓' : 'Not quite — here\u2019s why';
+      retry.classList.add('show');
+    }
+
+    buttons.forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (opts.classList.contains('locked')) return;
+        lock(b);
+      });
+    });
+
+    retry.addEventListener('click', function () {
+      opts.classList.remove('locked');
+      feedback.className = 'feedback';
+      retry.classList.remove('show');
+      buttons.forEach(function (b) { b.classList.remove('correct', 'wrong', 'dim'); });
+    });
+  })();
+</script>
+</body>
+</html>
